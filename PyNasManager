@@ -1,0 +1,78 @@
+#! /usr/bin/env python3
+#-*- coding: utf-8 -*-
+
+#	Copyright 2018, 王思远 <darknightghost.cn@gmail.com>
+
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	at your option) any later version.
+
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import sys
+import argparse
+import flask
+import Application
+
+def main():
+    #Parse arguments
+    parser = argparse.ArgumentParser(description="Nas manager service.")
+    parser.add_argument("-d", "--daemon", action="store_true",
+            help = "Run as daemon.")
+    parser.add_argument("-e", "--debug", action="store_true",
+            help = "Run in debug mode.")
+    parser.add_argument("-p", "--port", type = int, default = 80,
+            help = "Server port(default 80).")
+    parser.add_argument("-a", "--address", type = str, default = "0.0.0.0",
+            help = "Server address(default 0.0.0.0).")
+    parser.add_argument("-l", "--log", type = str, default = "/dev/null",
+            help = "Log path.")
+    args = parser.parse_args()
+
+    #Run application
+    if args.daemon:
+        daemon()
+
+    app = Application.Application(args.log, args.debug)
+    return app.run(args.address, args.port, args.debug)
+
+def daemon():
+    '''
+        Run as daemon.
+    '''
+    pid = os.fork()
+    if pid < 0:
+        print("Failed to fork.")
+        exit(-1)
+
+    elif pid == 0:
+        #Replace stdin, stdout, stderr
+        sys.stdout.flush()
+        sys.stderr.flush()
+
+        f_in = open("/dev/null", "r")
+        f_out = open("/dev/null", "w")
+
+        os.dup2(f_in.fileno(), sys.stdin.fileno())
+        os.dup2(f_out.fileno(), sys.stdout.fileno())
+        os.dup2(f_out.fileno(), sys.stderr.fileno())
+
+        #Set sid
+        os.setsid()
+        os.umask(0)
+
+        return 0
+
+    elif pid > 0:
+        #Exit parent process
+        exit(0)
+
+exit(main())
