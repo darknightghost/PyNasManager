@@ -57,7 +57,7 @@ class Application(DesignMode.Singleton.Singleton):
             level = logging.DEBUG
 
         else:
-            level = logging.INFO
+            level = logging.WARNING
 
         logging.basicConfig(filename = log_path,
                 filemode = "a",

@@ -1,4 +1,34 @@
+body {
+	background-color: #0000FF;
+	color:white;
+	font-family: monospace;
+}
+
+.middlebox {
+	background: gray;
+}
+
+input {
+	background-color: white;
+	color:black;
+}
+
+input[type="reset"],input[type="submit"],input[type="button"] {
+	background-color: red;
+	color: yellow;
+	width: 50px;
+}
+
+.row {
+	display: inline;
+}
+
+.line {
+	width: 100%;
+	text-align: center;
+}
+
 .error {
-	color:red;
+	color: red;
 }
 
