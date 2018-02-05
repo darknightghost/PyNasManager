@@ -26,21 +26,27 @@ import DesignMode
 import DesignMode.Singleton
 
 class StaticRouter:
-    def __init__(self, path):
+    def __init__(self, path, content_type):
         self.path = path
+        self.content_type = content_type
 
     def getFile(self):
         f = open(self.path, "rb")
         data = f.read()
         f.close()
 
-        return data, 200, {'Content-Type': "text/css"}
+        return data, 200, {'Content-Type': self.content_type}
 
 class Application(DesignMode.Singleton.Singleton):
     '''
         Application object.
     '''
-    STATIC_FILE_EXTNAMES = [".css", ".jpg", ".gif", ".png", ".bmp"]
+    STATIC_FILE_EXTNAMES = {".css" : "text/css",
+            ".jpg"  : "image/jpeg",
+            ".jpeg" : "image/jpeg",
+            ".gif"  : "image/gif",
+            ".png"  : "image/png", 
+            ".bmp"  : "application/x-bmp"}
     APP_NAME = "Nas Manager"
     def __init_instance__(self, log_path, debug):
         #Flask
@@ -58,10 +64,20 @@ class Application(DesignMode.Singleton.Singleton):
                 format = "%(asctime)s|%(levelname)s|%(lineno)d|%(pathname)s|%(message)s",
                 level = level)
         self.logger = logging.getLogger()
+        self.logger.addHandler(logging.StreamHandler())
+        self.logger.info("Service initialized.")
 
     def run(self, host, port, debug):
         self.__scan()
-        self.app.run(host, port, debug)
+        self.logger.info("Service started.")
+        try:
+            self.app.run(host, port, debug)
+
+        except KeyboardInterrupt:
+            pass
+
+        self.logger.info("Service stopped.")
+
         return 0
 
     def __scan(self):
@@ -93,9 +109,11 @@ class Application(DesignMode.Singleton.Singleton):
                     imp.load_source("", file_path)
 
                 elif os.path.splitext(f)[-1].lower() \
-                        in self.STATIC_FILE_EXTNAMES:
+                        in self.STATIC_FILE_EXTNAMES.keys():
                     #Load static files
-                    r = StaticRouter(file_path)
+                    r = StaticRouter(file_path, 
+                            self.STATIC_FILE_EXTNAMES[
+                                os.path.splitext(f)[-1].lower()])
                     url = file_path[len(root) :]
                     if url[0] != "/":
                         url = "/" + url
