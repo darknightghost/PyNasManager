@@ -1,0 +1,32 @@
+.middlebox {
+	background: gray;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 80%;
+	margin-left: -40%;
+	height: 80%;
+	margin-top: -19%;
+	box-shadow: 10px 10px 10px #000000;
+	text-align: center;
+	
+}
+
+.center {
+	position: absolute;
+	border-style: hidden;
+	top: 50%;
+	left: 50%;
+
+	width: 300px;
+	margin-left: -150px;
+	height: 80px;
+	margin-top: -40px;
+}
+
+input[type="reset"],input[type="submit"],input[type="button"] {
+	width: 60px;
+	height: 20px;
+	margin-top: 10px;
+}
+

@@ -1,28 +1,31 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
 <html>
 	<head>
 		<title>Login</title>
 		<meta http-equiv="charset" content="utf-8"	>
 		<link type="text/css" rel="stylesheet" href="/skin/style.css" charset="utf-8">
+		<link type="text/css" rel="stylesheet" href="/skin/login.css" charset="utf-8">
 	</head>
 	<body>
 		<div class="middlebox">
 			<form action="/do-login.html" method="post">
-				<div class="line">
-					<div class="row" id="static">Username : </div>
-					<div class="row"><input type="text" name="username" /></div>
+				<div class="center">
+					<div class="topline">
+						<div class="leftrow" id="static">Username : </div>
+						<div class="row"><input type="text" name="username" /></div>
+					</div>
+					<div class="line">
+						<div class="leftrow" id="static">Password : </div>
+						<div class="row"><input type="password" name="passwd" /></div>
+					</div>
+					<div class="line">
+						<div class="leftrow"><input class="button" type="submit" value="OK" /></div>
+						<div class="row"><input class="button" type="reset" value="Reset" /></div>
+					</div >
+					{% if error: %}
+						<div class="error">{{ error }}</div>
+					{% endif %}
 				</div>
-				<div class="line">
-					<div class="row" id="static">Password : </div>
-					<div class="row"><input type="text" name="passwd" /></div>
-				</div>
-				<div class="line">
-					<div class="row"><input class="button" type="submit" value="OK" /></div>
-					<div class="row"><input class="button" type="reset" value="Reset" /></div>
-				</div >
-				{% if error: %}
-					<div class="error">{{ error }}</div>
-				{% endif %}
 			</form>
 		</div>
 	</body>
