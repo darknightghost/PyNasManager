@@ -36,6 +36,8 @@
 '''
 
 import xml
+import xml.dom
+import xml.dom.minidom
 import os
 
 class Config:
@@ -46,16 +48,37 @@ class Config:
         '''
             Config key.
         '''
-        def __init__(self, key, value, parent = None):
+        def __init__(self, key = None, value = None, parent = None, doc = None):
+            '''
+                Key-value pair of config.
+
+                Config.Key(key, value) -> key
+                Config.Key(parent) -> key
+                Config.Key(doc) -> key
+            '''
             self.__key = key
             self.__value = value
             self.__children = {}
             self.__parent = parent
+            self.__node = None
+
+            if doc == None:
+                self.__doc = parent.__doc
+
+            else:
+                self.__doc = doc
 
         def parent(self):
+            '''
+                Config.Key.parent() -> parent
+
+                Get parent key-value pair.
+            '''
             return self.__parent
 
         def set_parent(self, parent):
+            '''
+            '''
             self.__parent = parent
 
         def name(self):
@@ -130,20 +153,43 @@ class Config:
             parent.remove_child(key)
 
         def load(self, node):
-            pass
+            if self.__parent != None:
+                self.__key = node.getAttribute("name")
+                self.__value = node.getAttribute("value")
 
-        def save(self):
+            else:
+                self.__key = None
+                self.__value = None
+
+            for n in node.childNodes:
+                if n.nodeType == n.ELEMENT_NODE \
+                        and n.nodeName == "key":
+                    child = Key(parent = self)
+                    child.load(node)
+                    self.set_child(child.name(), child)
+
+        def __rebuild_node(self):
             pass
 
     def __init__(self,
             path=os.path.join(os.path.dirname(__file__), "config.xml")):
-        self.path = os.path.abspath(path)
+        self.__path = os.path.abspath(path)
+        self.load()
 
     def load(self):
-        pass
+        try:
+            f = open(self.__path, "r")
+
+        except FileNotFoundError as e:
+            print("Failed to open config file.")
+            raise e
+
+        self.__doc = xml.dom.minidom.parseString(f.read())
+        self.__root = Key(doc = self.__doc)
+        self.__root.load(self.__doc.documentElement)
 
     def save(self):
-        pass
+        dom = self.__root.save()
 
     def root(self):
-        pass
+        return self.__root
