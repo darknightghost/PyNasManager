@@ -76,40 +76,107 @@ class Config:
             '''
             return self.__parent
 
-        def set_parent(self, parent):
+        def __set_parent(self, parent):
             '''
+                Config.Key.set_parent(parent)
+
+                Set new parent.
             '''
             self.__parent = parent
 
-        def name(self):
-            return self.name
+            if self.__parent == None:
+                self.__doc = None
 
-        def set_name(self, new_name):
-            self.__name = new_name
+            else:
+                self.__doc = parent.__doc
+
+            if self.__node == None:
+                self.__rebuild_node()
+
+        def key(self):
+            '''
+                Config.Key.key() -> str
+
+                Get key name.
+            '''
+            return self.__key
+
+        def __set_key(self, new_key):
+            '''
+                Config.Key.__set_key(key)
+
+                Set key name.
+            '''
+            self.__key = str(new_key)
+
+            if self.__node != None:
+                self.__node.setAttribute("name", self.__key)
 
         def value(self):
+            '''
+                Config.Key.value() -> str
+
+                Get key value.
+            '''
             return self.value
 
         def set_value(self, new_value):
-            self.__value = new_value
+            '''
+                Config.Key.__set_value(value)
+
+                Set key value.
+            '''
+            self.__value = str(new_value)
+
+            if self.__node != None:
+                self.__node.setAttribute("value", self.__value)
 
         def child(self, key):
+            '''
+                Config.Key.child(key) -> node
+
+                Get child node by key.
+            '''
             return self.__children[key]
 
-        def set_child(self, key, node):
+        def __set_child(self, key, node):
+            '''
+                Config.Key.__set_child(key, node)
+
+                Set child.
+            '''
             if node.parent != None:
                 raise ValueError("Node has already been used.")
 
-            self.__children[key] = node
-            node.set_parent(self)
-            node.set_name(key)
+            key = str(key)
 
-        def remove_child(self, key):
-            self.__children[key].set_parent(None)
+            if key in self.__children.keys():
+                raise KeyError("Key has already been used.")
+
+            node.__set_parent(self)
+            self.__children[key] = node
+            node.__set_key(key)
+
+        def __remove_child(self, key):
+            '''
+                Config.Key.__remove_child(key)
+
+                Remove child.
+            '''
+            key = str(key)
+            node = self.__children[key]
+            self.__doc.removeChild(node.__node)
+            node.__set_parent(None)
             del self.__children[key]
 
         def __get_key(self, path):
+            '''
+                Config.Key.__get_key(path) -> node
+
+                Get child by path.
+            '''
             #Get the begining node
+            key = str(key)
             current_node = self
             if path[0] == '/':
                 while current_node.parent() != None:
@@ -134,7 +201,7 @@ class Config:
 
 
         def __getitem__(self, path):
-            return self.__get_child(path)
+            return self.__get_key(path)
 
         def __setitem__(self, path, node):
             key = path.split("/")[-1]
@@ -142,7 +209,7 @@ class Config:
                 raise KeyError("Illegal path \"%s\"."%(path))
 
             parent = self.__get_key(path[: -len(key)])
-            parent.set_child(key, node)
+            parent.__set_child(key, node)
 
         def __delitem__(self, key):
             key = path.split("/")[-1]
@@ -150,9 +217,14 @@ class Config:
                 raise KeyError("Illegal path \"%s\"."%(path))
 
             parent = self.__get_key(path[: -len(key)])
-            parent.remove_child(key)
+            parent.__remove_child(key)
 
         def load(self, node):
+            '''
+                Config.key.load(node)
+
+                Load xml node.
+            '''
             if self.__parent != None:
                 self.__key = node.getAttribute("name")
                 self.__value = node.getAttribute("value")
@@ -161,15 +233,29 @@ class Config:
                 self.__key = None
                 self.__value = None
 
+            self.__node = node
+
             for n in node.childNodes:
                 if n.nodeType == n.ELEMENT_NODE \
                         and n.nodeName == "key":
                     child = Key(parent = self)
                     child.load(node)
-                    self.set_child(child.name(), child)
+                    self.__set_child(child.key(), child)
 
         def __rebuild_node(self):
-            pass
+            '''
+                Config.key.__rebuild_node()
+
+                Rebuild node.
+            '''
+            #Check status
+            if self.__parent == None or self.__node != None:
+                raise RuntimeError("Illegal rebuild operation.")
+
+            #Create element
+            self.__node = self.__doc.createElement("key")
+            self.__node.setAttribute("name", self.__key)
+            self.__node.setAttribute("value", self.__value)
 
     def __init__(self,
             path=os.path.join(os.path.dirname(__file__), "config.xml")):
@@ -188,8 +274,20 @@ class Config:
         self.__root = Key(doc = self.__doc)
         self.__root.load(self.__doc.documentElement)
 
+    def doc(self):
+        return self.__doc
+
     def save(self):
-        dom = self.__root.save()
+        try:
+            f = open(self.__path, "w")
+
+        except FileNotFoundError as e:
+            print("Failed to write config file.")
+            raise e
+
+        f.write(self.__doc.toprettyxml(indent = '\t', newl = '\n',
+            encoding = 'utf-8'))
+        f.close()
 
     def root(self):
         return self.__root
