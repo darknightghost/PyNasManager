@@ -19,11 +19,22 @@
 
 import os
 import argparse
-import flask
-import logging
 import imp
+
+import flask
+import flask_sqlalchemy
+
+import logging
+import logging.handlers
+
 import DesignMode
 import DesignMode.Singleton
+
+import Config
+
+import Privilege
+import Privilege.User
+import Privilege.Group
 
 class StaticRouter:
     def __init__(self, path, content_type):
@@ -48,9 +59,16 @@ class Application(DesignMode.Singleton.Singleton):
             ".png"  : "image/png", 
             ".bmp"  : "application/x-bmp"}
     APP_NAME = "Nas Manager"
-    def __init_instance__(self, log_path, debug):
+    def __init_instance__(self, cfg_path, debug):
         #Flask
         self.app = flask.Flask(self.APP_NAME)
+
+        #Config
+        self.config = Config.config()
+        self.__host = self.config.root()["/system/network/ip"]
+        self.__port = self.config.root()["/system/network/port"]
+
+        self.__debug = debug
         
         #Log
         if debug:
@@ -59,19 +77,30 @@ class Application(DesignMode.Singleton.Singleton):
         else:
             level = logging.INFO
 
-        logging.basicConfig(filename = log_path,
-                filemode = "a",
+        log_file_handler = logging.handlers.RotatingFileHandler(
+                self.config.root()["/system/log/path"],
+                maxBytes = int(self.config.root()["/system/log/max-size"]),
+                backupCount = int(self.config.root()["/system/log/max-num"]),
+                encoding="utf-8")
+        logging.basicConfig(
                 format = "%(asctime)s|%(levelname)s|%(lineno)d|%(pathname)s|%(message)s",
                 level = level)
         self.logger = logging.getLogger()
         self.logger.addHandler(logging.StreamHandler())
+        self.logger.addHandler(log_file_handler)
         self.logger.info("Service initialized.")
 
-    def run(self, host, port, debug):
+        #Database
+        self.app.config["SQLALCHEMY_DATABASE_URI"] \
+                = "sqlite:///%s"%(os.path.abspath(self.config.root()[
+                    "/system/database/path"]))
+        self.db = flask_sqlalchemy.SQLAlchemy(self.app)
+
+    def run(self):
         self.__scan()
         self.logger.info("Service started.")
         try:
-            self.app.run(host, port, debug)
+            self.app.run(self.__host, self.__port, self.__debug)
 
         except KeyboardInterrupt:
             pass
@@ -101,11 +130,6 @@ class Application(DesignMode.Singleton.Singleton):
 
                 elif os.path.splitext(f)[-1].lower() == ".py":
                     #Load python files
-                    #f = open(file_path, "r")
-                    #code = compile(f.read(), file_path, "exec")
-                    #f.close()
-                    #exec(code)
-                    #finder = importlib.abc.Finder()
                     imp.load_source("", file_path)
 
                 elif os.path.splitext(f)[-1].lower() \

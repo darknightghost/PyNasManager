@@ -23,8 +23,18 @@
         <?xml version="1.0" encoding="utf-8"?>
         <ServerConfig>
             <key name="system" value="">
-                <key name="sql-uri" value="" />
-                ...
+                <key name="database" value="">
+		    <key name="path" value="/var/PyNasManager/database.db" />
+                </key>
+                <key name="network" value="">
+                    <key name="ip" value="0.0.0.0" />
+                    <key name="port" value="8000" />
+                </key>
+                <key name="log" value="">
+                    <key name="path" value="/var/log" />
+                    <key name="max-size" value="4000000" />
+                    <key name="max-num" value="10" />
+                </key>
             </key>"
             <key name="modules" value="mudules">
                 <key name="module-name" value="">
@@ -145,7 +155,7 @@ class Config:
 
                 Set child.
             '''
-            if node.parent != None:
+            if node.parent() != None and node.parent() != self:
                 raise ValueError("Node has already been used.")
 
             key = str(key)
@@ -176,7 +186,6 @@ class Config:
                 Get child by path.
             '''
             #Get the begining node
-            key = str(key)
             current_node = self
             if path[0] == '/':
                 while current_node.parent() != None:
@@ -238,8 +247,8 @@ class Config:
             for n in node.childNodes:
                 if n.nodeType == n.ELEMENT_NODE \
                         and n.nodeName == "key":
-                    child = Key(parent = self)
-                    child.load(node)
+                    child = Config.Key(parent = self)
+                    child.load(n)
                     self.__set_child(child.key(), child)
 
         def __rebuild_node(self):
@@ -257,37 +266,90 @@ class Config:
             self.__node.setAttribute("name", self.__key)
             self.__node.setAttribute("value", self.__value)
 
+        def __str__(self):
+            if self.key() == None:
+                ret = "--"
+
+            else:
+                ret = "-%s : %s"%(self.__key, self.__value)
+
+            if len(self.__children.keys()) > 0:
+
+                for c in self.__children.keys():
+                    s = str(self.__children[c])
+                    lines = s.split("\n")
+                    for l in lines:
+                        if l.strip() == "":
+                            continue
+
+                        ret += "\n |%s"%(l)
+
+            return ret
+
     def __init__(self,
             path=os.path.join(os.path.dirname(__file__), "config.xml")):
-        self.__path = os.path.abspath(path)
-        self.load()
+        '''
+            Config(path = "config.xml") -> config
 
-    def load(self):
+            Open config file.
+        '''
+        self.__path = os.path.abspath(path)
+        self.__load()
+
+    def __load(self):
+        '''
+            Config.__load()
+
+            Load config file.
+        '''
         try:
-            f = open(self.__path, "r")
+            f = open(self.__path, "r", encoding = "utf-8")
 
         except FileNotFoundError as e:
             print("Failed to open config file.")
             raise e
 
         self.__doc = xml.dom.minidom.parseString(f.read())
-        self.__root = Key(doc = self.__doc)
+        self.__root = Config.Key(doc = self.__doc)
         self.__root.load(self.__doc.documentElement)
 
     def doc(self):
+        '''
+            Config.doc()
+
+            Get xml document.
+        '''
         return self.__doc
 
     def save(self):
+        '''
+            Config.doc()
+
+            Save config file.
+        '''
         try:
-            f = open(self.__path, "w")
+            f = open(self.__path, "w", encoding = "utf-8")
 
         except FileNotFoundError as e:
             print("Failed to write config file.")
             raise e
 
-        f.write(self.__doc.toprettyxml(indent = '\t', newl = '\n',
-            encoding = 'utf-8'))
+        xmlString = self.__doc.toxml(encoding = 'utf-8').decode("utf-8")
+
+        lines = xmlString.split("\n")
+        xmlString = ""
+
+        for l in lines:
+            if l != "":
+                xmlString += l + "\n"
+
+        f.write(xmlString)
         f.close()
 
     def root(self):
+        '''
+            Config.root()
+
+            Get root key.
+        '''
         return self.__root

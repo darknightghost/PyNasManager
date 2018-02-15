@@ -1,0 +1,68 @@
+#! /usr/bin/env python3
+#-*- coding: utf-8 -*-
+
+#	Copyright 2018, 王思远 <darknightghost.cn@gmail.com>
+
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	at your option) any later version.
+
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+'''
+    Initialize server config.
+'''
+
+import CheckEnv
+
+REQUIRED_MODULES = (
+        "xml",
+        "xml.dom",
+        "xml.dom.minidom",
+        "flask",
+        "flask_sqlalchemy",
+        "sqlite3")
+
+REQUIRED_EXECS = (
+        "sh",
+        "zfs")
+
+def main():
+    '''
+        Main function.
+    '''
+    #Check environment
+    if not check_environment():
+        print("Missing required module(s).")
+        return -1
+
+    #Initialize setting
+    if not init_setting():
+        print("Failed to create config file.")
+
+    return 0
+
+def check_environment():
+    #Check modules
+    for m in REQUIRED_MODULES:
+        if not CheckEnv.check_module(m):
+            return False
+
+    #Check executable files
+    for m in REQUIRED_EXECS:
+        if not CheckEnv.check_exec(m):
+            return False
+    return True
+
+def init_setting():
+    pass
+
+if __name__ == '__main__':
+    exit(main())

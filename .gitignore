@@ -305,3 +305,5 @@ ENV/
 .directory
 tags
 config.xml
+test.db
+test/*

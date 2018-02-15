@@ -29,20 +29,16 @@ def main():
             help = "Run as daemon.")
     parser.add_argument("-e", "--debug", action="store_true",
             help = "Run in debug mode.")
-    parser.add_argument("-p", "--port", type = int, default = 80,
-            help = "Server port(default 80).")
-    parser.add_argument("-a", "--address", type = str, default = "0.0.0.0",
-            help = "Server address(default 0.0.0.0).")
-    parser.add_argument("-l", "--log", type = str, default = "/dev/null",
-            help = "Log path.")
+    parser.add_argument("-c", "--config", type = str, default = "./config.xml",
+            help = "Config file path.")
     args = parser.parse_args()
 
     #Run application
     if args.daemon:
         daemon()
 
-    app = Application.Application(args.log, args.debug)
-    return app.run(args.address, args.port, args.debug)
+    app = Application.Application(args.config, args.debug)
+    return app.run()
 
 def daemon():
     '''
@@ -75,4 +71,5 @@ def daemon():
         #Exit parent process
         exit(0)
 
-exit(main())
+if __name__ == '__main__':
+    exit(main())
