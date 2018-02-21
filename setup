@@ -20,7 +20,13 @@
     Initialize server config.
 '''
 
+import re
+import os
+
 import CheckEnv
+import Config
+
+import Application
 
 REQUIRED_MODULES = (
         "xml",
@@ -34,18 +40,29 @@ REQUIRED_EXECS = (
         "sh",
         "zfs")
 
+cfg_path = "/home/darknightghost/projects/PyNasManager/test/config.xml"
+
 def main():
     '''
         Main function.
     '''
     #Check environment
+    print("Checking environment...")
     if not check_environment():
         print("Missing required module(s).")
         return -1
 
     #Initialize setting
+    '''
+    print("Creating config file...")
     if not init_setting():
         print("Failed to create config file.")
+    '''
+
+    #Initializing database
+    print("Creating database...")
+    if not init_database():
+        print("Failed to create database.")
 
     return 0
 
@@ -62,7 +79,131 @@ def check_environment():
     return True
 
 def init_setting():
-    pass
+    global cfg_path
+    #Get config path
+    default_path =  os.path.abspath(os.path.join(os.path.dirname(__file__),
+            "config.xml"))
+    cfg_path = input("Path of config file(default %s) : "%(default_path))
+    if cfg_path == "":
+       cfg_path = default_path
+
+    else:
+        cfg_path = os.path.abspath(cfg_path)
+
+    #Create file
+    try:
+        f = open(cfg_path, "w", encoding = 'utf-8')
+
+    except Exception as e:
+        print(str(e))
+        return False
+
+    f.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<ServerConfig>\n</ServerConfig>")
+    f.close()
+
+    #Add keys
+    cfg = Config.Config(path = cfg_path)
+
+    #/system
+    node = Config.Config.Key()
+    node.set_value("")
+    cfg.root()["/system"] = node
+
+    #/system/database
+    node = Config.Config.Key()
+    node.set_value("")
+    cfg.root()["/system/database"] = node
+
+    #/system/database/path
+    db_path = os.path.abspath(input("SQLite database path : "))
+    node = Config.Config.Key()
+    node.set_value(db_path)
+    cfg.root()["/system/database/path"] = node
+
+    #/system/network
+    node = Config.Config.Key()
+    node.set_value("")
+    cfg.root()["/system/network"] = node
+
+    #/system/network/ip
+    node = Config.Config.Key()
+    ip_addr = input("IP address : ")
+    node.set_value(ip_addr)
+    cfg.root()["/system/network/ip"] = node
+
+    #/system/network/port
+    node = Config.Config.Key()
+    port = int(input("Server port : "))
+    node.set_value(port)
+    cfg.root()["/system/network/port"] = node
+
+    #/system/log
+    node = Config.Config.Key()
+    node.set_value("")
+    cfg.root()["/system/log"] = node
+
+    #/system/log/path
+    log_file_path = os.path.abspath(input("Log file path : "))
+    node = Config.Config.Key()
+    node.set_value(log_file_path)
+    cfg.root()["/system/log/path"] = node
+
+    #/system/log/max-size
+    node = Config.Config.Key()
+    s = input("Maxium size of each log file : ").lower()
+    max_size = int(re.sub("[^0-9]", "", s))
+    if "kb" in s:
+        max_size *= 1024
+
+    elif "mb" in s:
+        max_size *= 1024 * 1024
+
+    elif "gb" in s:
+        max_size *= 1024 * 1024 * 1024
+
+    elif "tb" in s:
+        max_size *= 1024 * 1024 * 1024 * 1024
+
+    node.set_value(max_size)
+    cfg.root()["/system/log/max-size"] = node
+
+    #/system/log/max-num
+    node = Config.Config.Key()
+    max_num = int(input("Maxium number log file : "))
+    node.set_value(max_num)
+    cfg.root()["/system/log/max-num"] = node
+
+    #/modules
+    node = Config.Config.Key()
+    node.set_value("")
+    cfg.root()["/modules"] = node
+
+    cfg.save()
+
+    return True
+
+def init_database():
+    app = Application.Application(cfg_path, False)
+    import Privilege
+    import Privilege.User
+    import Privilege.Group
+    import Privilege.UserPrivilege
+
+    app.db.create_all()
+
+    root_pri = Privilege.UserPrivilege.UserPrivilege(name = "root")
+    app.db.session.add(root_pri)
+    app.db.session.commit()
+
+    root_grp = Privilege.Group.Group(name = "root")
+    app.db.session.add(root_grp)
+    app.db.session.commit()
+
+    root_grp.privileges.append(root_pri)
+    app.db.session.commit()
+
+    return True
+
 
 if __name__ == '__main__':
     exit(main())

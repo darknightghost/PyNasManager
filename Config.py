@@ -72,7 +72,7 @@ class Config:
             self.__parent = parent
             self.__node = None
 
-            if doc == None:
+            if parent != None:
                 self.__doc = parent.__doc
 
             else:
@@ -128,7 +128,7 @@ class Config:
 
                 Get key value.
             '''
-            return self.value
+            return self.__value
 
         def set_value(self, new_value):
             '''
@@ -265,6 +265,7 @@ class Config:
             self.__node = self.__doc.createElement("key")
             self.__node.setAttribute("name", self.__key)
             self.__node.setAttribute("value", self.__value)
+            self.__parent.__node.appendChild(self.__node)
 
         def __str__(self):
             if self.key() == None:
@@ -309,7 +310,12 @@ class Config:
             print("Failed to open config file.")
             raise e
 
-        self.__doc = xml.dom.minidom.parseString(f.read())
+        s = ""
+        lines = f.readlines()
+        for l in lines:
+            s += l.strip()
+
+        self.__doc = xml.dom.minidom.parseString(s)
         self.__root = Config.Key(doc = self.__doc)
         self.__root.load(self.__doc.documentElement)
 
@@ -334,8 +340,7 @@ class Config:
             print("Failed to write config file.")
             raise e
 
-        xmlString = self.__doc.toxml(encoding = 'utf-8').decode("utf-8")
-
+        xmlString = self.__doc.toprettyxml(indent='    ', newl='\n', encoding = 'utf-8').decode("utf-8")
         lines = xmlString.split("\n")
         xmlString = ""
 

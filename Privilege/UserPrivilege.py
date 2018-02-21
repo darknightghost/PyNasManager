@@ -24,12 +24,11 @@ import Privilege.CrossTable
 
 app = Application.Application()
 
-class Group(app.db.Model):
+class UserPrivilege (app.db.Model):
     '''
-        Group model.
+        UserPrivilege model.
     '''
     id = app.db.Column(app.db.Integer,
-            app.db.Sequence('gid_seq', start=0, increment=1), 
+            app.db.Sequence('upid_seq', start=0, increment=1), 
             primary_key=True)
     name = app.db.Column(app.db.String(32), unique=True, nullable=False)
-    privileges = app.db.relationship("UserPrivilege", Privilege.CrossTable.group_privilege_table)

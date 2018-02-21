@@ -32,10 +32,6 @@ import DesignMode.Singleton
 
 import Config
 
-import Privilege
-import Privilege.User
-import Privilege.Group
-
 class StaticRouter:
     def __init__(self, path, content_type):
         self.path = path
@@ -64,9 +60,9 @@ class Application(DesignMode.Singleton.Singleton):
         self.app = flask.Flask(self.APP_NAME)
 
         #Config
-        self.config = Config.config()
-        self.__host = self.config.root()["/system/network/ip"]
-        self.__port = self.config.root()["/system/network/port"]
+        self.config = Config.Config(path = cfg_path)
+        self.__host = self.config.root()["/system/network/ip"].value()
+        self.__port = self.config.root()["/system/network/port"].value()
 
         self.__debug = debug
         
@@ -78,9 +74,9 @@ class Application(DesignMode.Singleton.Singleton):
             level = logging.INFO
 
         log_file_handler = logging.handlers.RotatingFileHandler(
-                self.config.root()["/system/log/path"],
-                maxBytes = int(self.config.root()["/system/log/max-size"]),
-                backupCount = int(self.config.root()["/system/log/max-num"]),
+                self.config.root()["/system/log/path"].value(),
+                maxBytes = int(self.config.root()["/system/log/max-size"].value()),
+                backupCount = int(self.config.root()["/system/log/max-num"].value()),
                 encoding="utf-8")
         logging.basicConfig(
                 format = "%(asctime)s|%(levelname)s|%(lineno)d|%(pathname)s|%(message)s",
@@ -93,7 +89,8 @@ class Application(DesignMode.Singleton.Singleton):
         #Database
         self.app.config["SQLALCHEMY_DATABASE_URI"] \
                 = "sqlite:///%s"%(os.path.abspath(self.config.root()[
-                    "/system/database/path"]))
+                    "/system/database/path"].value()))
+        self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
         self.db = flask_sqlalchemy.SQLAlchemy(self.app)
 
     def run(self):

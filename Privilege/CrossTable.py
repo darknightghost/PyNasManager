@@ -19,17 +19,14 @@
 import flask_sqlalchemy
 import Application
 
-import Privilege
-import Privilege.CrossTable
-
 app = Application.Application()
 
-class Group(app.db.Model):
-    '''
-        Group model.
-    '''
-    id = app.db.Column(app.db.Integer,
-            app.db.Sequence('gid_seq', start=0, increment=1), 
-            primary_key=True)
-    name = app.db.Column(app.db.String(32), unique=True, nullable=False)
-    privileges = app.db.relationship("UserPrivilege", Privilege.CrossTable.group_privilege_table)
+user_group_table = app.db.Table('user_group', app.db.Model.metadata,
+                           app.db.Column('uid', app.db.Integer, app.db.ForeignKey('user.id')),
+                           app.db.Column('gid', app.db.Integer, app.db.ForeignKey('group.id'))
+                           )
+
+group_privilege_table = app.db.Table('group_privilege', app.db.Model.metadata,
+                           app.db.Column('gid', app.db.Integer, app.db.ForeignKey('group.id')),
+                           app.db.Column('privilege_id', app.db.Integer, app.db.ForeignKey('user_privilege.id'))
+                           )

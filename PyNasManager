@@ -20,6 +20,10 @@ import os
 import sys
 import argparse
 import flask
+import Privilege
+import Privilege.User
+import Privilege.Group
+import Privilege.Privilege
 import Application
 
 def main():
