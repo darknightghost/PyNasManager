@@ -73,16 +73,21 @@ class Application(DesignMode.Singleton.Singleton):
         else:
             level = logging.INFO
 
+        fmt = "%(asctime)s|%(levelname)s|%(lineno)d|%(pathname)s|%(message)s"
+
         log_file_handler = logging.handlers.RotatingFileHandler(
                 self.config.root()["/system/log/path"].value(),
                 maxBytes = int(self.config.root()["/system/log/max-size"].value()),
                 backupCount = int(self.config.root()["/system/log/max-num"].value()),
                 encoding="utf-8")
+
+        log_file_handler.setFormatter(logging.Formatter(fmt))
+        log_file_handler.setLevel(level)
+
         logging.basicConfig(
-                format = "%(asctime)s|%(levelname)s|%(lineno)d|%(pathname)s|%(message)s",
+                format = fmt,
                 level = level)
         self.logger = logging.getLogger()
-        self.logger.addHandler(logging.StreamHandler())
         self.logger.addHandler(log_file_handler)
         self.logger.info("Service initialized.")
 
@@ -92,6 +97,12 @@ class Application(DesignMode.Singleton.Singleton):
                     "/system/database/path"].value()))
         self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
         self.db = flask_sqlalchemy.SQLAlchemy(self.app)
+
+    def user_session(self):
+        '''
+            Get user session.
+        '''
+        pass
 
     def run(self):
         self.__scan()

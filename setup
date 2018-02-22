@@ -25,6 +25,7 @@ import os
 
 import CheckEnv
 import Config
+import getpass
 
 import Application
 
@@ -34,7 +35,8 @@ REQUIRED_MODULES = (
         "xml.dom.minidom",
         "flask",
         "flask_sqlalchemy",
-        "sqlite3")
+        "sqlite3",
+        "getpass")
 
 REQUIRED_EXECS = (
         "sh",
@@ -186,21 +188,38 @@ def init_database():
     app = Application.Application(cfg_path, False)
     import Privilege
     import Privilege.User
-    import Privilege.Group
+    import Privilege.UserGroup
     import Privilege.UserPrivilege
 
     app.db.create_all()
 
-    root_pri = Privilege.UserPrivilege.UserPrivilege(name = "root")
+    root_pri = Privilege.UserPrivilege.UserPrivilege(id = 0, name = "root")
     app.db.session.add(root_pri)
     app.db.session.commit()
 
-    root_grp = Privilege.Group.Group(name = "root")
+    root_grp = Privilege.UserGroup.UserGroup(id = 0, name = "root")
     app.db.session.add(root_grp)
     app.db.session.commit()
 
-    root_grp.privileges.append(root_pri)
+    root_usr = Privilege.User.User(id = 0, name = "root")
+
+    while True:
+        passwd = getpass.getpass("Enter root password : ")
+        if passwd == getpass.getpass("Retype root password : "):
+            break
+
+        else:
+            print("Password do not match.")
+
+    root_usr.set_passwd(passwd)
+    app.db.session.add(root_usr)
     app.db.session.commit()
+
+    root_grp.privileges.append(root_pri)
+    root_usr.groups.append(root_grp)
+    app.db.session.commit()
+
+    app.db.session.flush()
 
     return True
 

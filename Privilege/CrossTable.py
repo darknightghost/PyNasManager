@@ -21,12 +21,12 @@ import Application
 
 app = Application.Application()
 
-user_group_table = app.db.Table('user_group', app.db.Model.metadata,
+user_group_table = app.db.Table('user_user_group', app.db.Model.metadata,
                            app.db.Column('uid', app.db.Integer, app.db.ForeignKey('user.id')),
-                           app.db.Column('gid', app.db.Integer, app.db.ForeignKey('group.id'))
+                           app.db.Column('gid', app.db.Integer, app.db.ForeignKey('user_group.id'))
                            )
 
-group_privilege_table = app.db.Table('group_privilege', app.db.Model.metadata,
-                           app.db.Column('gid', app.db.Integer, app.db.ForeignKey('group.id')),
+group_privilege_table = app.db.Table('user_group_user_privilege', app.db.Model.metadata,
+                           app.db.Column('gid', app.db.Integer, app.db.ForeignKey('user_group.id')),
                            app.db.Column('privilege_id', app.db.Integer, app.db.ForeignKey('user_privilege.id'))
                            )

@@ -24,9 +24,9 @@ import Privilege.CrossTable
 
 app = Application.Application()
 
-class Group(app.db.Model):
+class UserGroup(app.db.Model):
     '''
-        Group model.
+        UserGroup model.
     '''
     id = app.db.Column(app.db.Integer,
             app.db.Sequence('gid_seq', start=0, increment=1), 
